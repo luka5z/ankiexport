@@ -2,20 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editable Dictionary to Anki</title>
+    <!-- Viewport setting is crucial for mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dictionary to Anki</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
-            --secondary: #10b981; /* Green for Save */
-            --warning: #f59e0b;   /* Orange for Edit */
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --warning: #f59e0b;
             --surface: #ffffff;
             --bg: #f3f4f6;
             --text: #1f2937;
             --text-light: #6b7280;
             --border: #e5e7eb;
+            --radius: 12px;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -23,113 +28,196 @@
             color: var(--text);
             display: flex;
             justify-content: center;
-            padding: 2rem 1rem;
+            min-height: 100vh;
             margin: 0;
+            /* Remove padding on mobile to use full screen */
+            padding: 1rem; 
         }
 
         .container {
             background: var(--surface);
             width: 100%;
             max-width: 600px;
-            padding: 2rem;
-            border-radius: 12px;
+            padding: 1.5rem;
+            border-radius: var(--radius);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 { margin-top: 0; text-align: center; color: var(--primary); }
-
-        /* Search Section */
-        .search-box { display: flex; gap: 10px; margin-bottom: 1.5rem; }
-        input {
-            flex: 1; padding: 12px; font-size: 16px;
-            border: 1px solid var(--border); border-radius: 6px;
-        }
-        button {
-            padding: 12px 20px; color: white; border: none;
-            border-radius: 6px; cursor: pointer; font-weight: 600;
-            transition: background 0.2s;
-        }
-        #search-btn { background-color: var(--primary); }
-        #search-btn:hover { background-color: #1d4ed8; }
-
-        /* Actions Bar */
-        .action-bar {
             display: flex;
-            gap: 10px;
-            margin-bottom: 1rem;
+            flex-direction: column;
+            height: fit-content;
+        }
+
+        h1 { 
+            margin-top: 0; 
+            text-align: center; 
+            color: var(--primary);
+            font-size: 1.75rem;
+        }
+
+        /* --- Search Section --- */
+        .search-box { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 1rem; 
+        }
+
+        input {
+            flex: 1; 
+            padding: 14px; 
+            /* 16px prevents iOS zoom on focus */
+            font-size: 16px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px;
+            -webkit-appearance: none; /* Removes iOS shadow */
+        }
+
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        button {
+            padding: 12px 20px; 
+            color: white; 
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.1s, background 0.2s;
+            /* Touch-action helps with tap responsiveness */
+            touch-action: manipulation;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        #search-btn { background-color: var(--primary); min-width: 80px;}
+        #search-btn:hover { background-color: var(--primary-dark); }
+
+        /* --- Actions Bar --- */
+        .action-bar {
             display: none; /* Hidden until search */
+            gap: 10px;
+            margin-bottom: 1.5rem;
         }
         
         .btn-edit { background-color: var(--warning); flex: 1; }
-        .btn-edit:hover { background-color: #d97706; }
-        
         .btn-save { background-color: var(--secondary); flex: 1; }
-        .btn-save:hover { background-color: #059669; }
-
         .btn-export { background-color: var(--text); flex: 1; }
-        .btn-export:hover { background-color: #374151; }
 
-        /* Results Section */
+        /* --- Results Section --- */
         #result-container {
-            padding: 1rem;
-            border: 1px solid transparent;
+            padding: 0.5rem;
+            border: 2px solid transparent;
             border-radius: 8px;
             transition: all 0.2s;
+            overflow-wrap: break-word; /* Prevents long words breaking layout */
         }
 
-        /* Styling for when content is being edited */
         .editing-mode {
-            background-color: #fffbeb; /* Light yellow */
-            border: 2px dashed var(--warning) !important;
+            background-color: #fffbeb;
+            border-color: var(--warning) !important;
             outline: none;
+            padding: 1rem; /* Add padding when editing for visual clarity */
         }
 
         .word-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start; /* Align top in case of wrapping */
             border-bottom: 2px solid var(--border);
             padding-bottom: 0.5rem;
             margin-bottom: 1rem;
+            flex-wrap: wrap; /* Allow wrapping on tiny screens */
+            gap: 10px;
         }
-        .word-title { font-size: 2rem; font-weight: bold; margin: 0; }
-        .phonetic { color: var(--text-light); font-family: monospace; font-size: 1.1rem; }
+        
+        .word-title { 
+            font-size: 2rem; 
+            font-weight: bold; 
+            margin: 0; 
+            line-height: 1.1;
+        }
+        
+        .phonetic { 
+            color: var(--text-light); 
+            font-family: monospace; 
+            font-size: 1.1rem;
+            align-self: center;
+        }
 
         .meaning-group { margin-bottom: 1.5rem; }
         .part-of-speech {
-            font-weight: bold; font-style: italic; color: var(--text-light);
-            margin-bottom: 0.5rem; display: block;
+            font-weight: bold; 
+            font-style: italic; 
+            color: var(--text-light);
+            margin-bottom: 0.5rem; 
+            display: block;
+            background: #f0fdf4;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
         }
+
         ul { margin: 0; padding-left: 1.2rem; }
-        li { margin-bottom: 0.5rem; line-height: 1.5; }
-        .example { color: var(--text-light); font-size: 0.9em; display: block; margin-top: 4px; }
+        li { margin-bottom: 0.8rem; line-height: 1.6; } /* Better line height for reading */
+        
+        .example { 
+            color: var(--text-light); 
+            font-size: 0.9em; 
+            display: block; 
+            margin-top: 4px; 
+            border-left: 3px solid var(--border);
+            padding-left: 8px;
+        }
 
-        .error { color: #dc2626; text-align: center; margin-top: 1rem; }
-        .loader { text-align: center; color: var(--text-light); display: none; margin-top: 1rem; }
+        .loader { text-align: center; color: var(--text-light); display: none; margin-top: 2rem;}
 
+        /* --- Mobile Specific Styles --- */
+        @media (max-width: 480px) {
+            body { padding: 0; background-color: var(--surface); }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 1rem;
+                max-width: 100%;
+            }
+
+            h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+
+            .action-bar {
+                flex-direction: column; /* Stack buttons vertically */
+                gap: 12px;
+            }
+
+            button {
+                width: 100%; /* Full width buttons */
+                padding: 14px;
+            }
+
+            .word-title { font-size: 1.75rem; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Dictionary Lookup</h1>
+    <h1><i class="fas fa-book-open"></i> Dictionary</h1>
     
     <div class="search-box">
-        <input type="text" id="word-input" placeholder="Type a word..." onkeydown="if(event.key==='Enter') searchWord()">
-        <button onclick="searchWord()" id="search-btn">Search</button>
+        <input type="text" id="word-input" placeholder="Enter a word..." autocomplete="off" onkeydown="if(event.key==='Enter') searchWord()">
+        <button onclick="searchWord()" id="search-btn"><i class="fas fa-search"></i></button>
     </div>
 
     <!-- Edit/Export Actions -->
     <div class="action-bar" id="action-bar">
         <button id="edit-btn" class="btn-edit" onclick="toggleEditMode()">
-            <i class="fas fa-pen"></i> Edit Text
+            <i class="fas fa-pen"></i> Edit Content
         </button>
         <button id="export-btn" class="btn-export" onclick="exportToAnki()">
-            <i class="fas fa-download"></i> Anki CSV
+            <i class="fas fa-download"></i> Download Anki CSV
         </button>
     </div>
 
-    <div id="loader" class="loader">Searching...</div>
+    <div id="loader" class="loader"><i class="fas fa-spinner fa-spin"></i> Finding definition...</div>
     
     <!-- This container becomes contenteditable -->
     <div id="result-container"></div>
@@ -148,23 +236,28 @@
 
         if (!word) return;
 
+        // Dismiss keyboard on mobile
+        input.blur();
+
         // Reset UI
         resultContainer.innerHTML = '';
         actionBar.style.display = 'none';
         loader.style.display = 'block';
-        resetEditMode(); // Ensure we aren't in edit mode
+        resetEditMode(); 
 
         try {
             const response = await fetch(`${apiUrl}${word}`);
             if (!response.ok) throw new Error("Word not found");
             const data = await response.json();
             
-            // Render the first result found
             renderResult(data[0]);
             actionBar.style.display = 'flex';
 
         } catch (error) {
-            resultContainer.innerHTML = `<div class="error">Could not find definition for "${word}".</div>`;
+            resultContainer.innerHTML = `<div style="text-align:center; color:#dc2626; margin-top:20px;">
+                <i class="fas fa-exclamation-circle fa-2x"></i><br><br>
+                Could not find definition for <b>"${word}"</b>.
+            </div>`;
         } finally {
             loader.style.display = 'none';
         }
@@ -174,13 +267,13 @@
         const container = document.getElementById('result-container');
         const phoneticText = entry.phonetic || (entry.phonetics.find(p => p.text)?.text) || '';
 
-        // We wrap the front and back content in IDs so we can grab them easily for export later
-        // Note: inline styles are used because they transfer well to Anki
         let html = `
             <div id="anki-front">
-                <span style="font-size: 24px; font-weight: bold;">${entry.word}</span> 
-                <span style="color: gray; font-family: monospace;">${phoneticText}</span>
-                <hr style="margin: 10px 0; border: 0; border-top: 2px solid #eee;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size: 1.8rem; font-weight: bold;">${entry.word}</span> 
+                    <span style="color: gray; font-family: monospace; font-size:1.1rem;">${phoneticText}</span>
+                </div>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
             </div>
             
             <div id="anki-back">
@@ -189,20 +282,20 @@
         entry.meanings.forEach(meaning => {
             html += `
                 <div class="meaning-group">
-                    <span style="font-weight: bold; font-style: italic; color: #666;">${meaning.partOfSpeech}</span>
-                    <ul>
+                    <span style="font-weight: bold; font-style: italic; color: #444; background:#eee; padding:2px 6px; border-radius:4px;">${meaning.partOfSpeech}</span>
+                    <ul style="margin-top:10px;">
                         ${meaning.definitions.map(def => `
-                            <li>
+                            <li style="margin-bottom:8px;">
                                 ${def.definition}
-                                ${def.example ? `<br><span style="color: #666; font-size: 0.9em;">"${def.example}"</span>` : ''}
+                                ${def.example ? `<br><span style="color: #666; font-size: 0.9em; font-style:italic;">"${def.example}"</span>` : ''}
                             </li>
                         `).join('')}
                     </ul>
-                </div>
+                </div><br>
             `;
         });
 
-        html += `</div>`; // Close back container
+        html += `</div>`;
         container.innerHTML = html;
     }
 
@@ -215,21 +308,17 @@
         isEditing = !isEditing;
 
         if (isEditing) {
-            // Switch to Edit Mode
             container.contentEditable = "true";
             container.classList.add('editing-mode');
             container.focus();
             
-            // Change Button Visuals
-            btn.innerHTML = '<i class="fas fa-save"></i> Save Text';
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
             btn.className = 'btn-save';
         } else {
-            // Save Mode (Switch back to View)
             container.contentEditable = "false";
             container.classList.remove('editing-mode');
             
-            // Change Button Visuals
-            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Text';
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
             btn.className = 'btn-edit';
         }
     }
@@ -243,7 +332,7 @@
             container.classList.remove('editing-mode');
         }
         if(btn) {
-            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Text';
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
             btn.className = 'btn-edit';
         }
     }
@@ -251,9 +340,6 @@
     // --- ANKI EXPORT LOGIC ---
 
     function exportToAnki() {
-        // IMPORTANT: We now grab the content directly from the DOM (HTML)
-        // instead of the JSON API data. This preserves user edits.
-        
         const frontDiv = document.getElementById('anki-front');
         const backDiv = document.getElementById('anki-back');
 
@@ -262,22 +348,17 @@
             return;
         }
 
-        // Get the HTML content as modified by the user
-        // We clean up newlines to make the CSV cleaner
         const frontHtml = frontDiv.innerHTML.replace(/\n/g, '').trim();
         const backHtml = backDiv.innerHTML.replace(/\n/g, '').trim();
 
-        // Create CSV content (Handling CSV escaping)
         const csvContent = `"${escapeCsv(frontHtml)}","${escapeCsv(backHtml)}"`;
         
-        // Use the word text for filename, fallback to 'export'
         const wordText = frontDiv.querySelector('span')?.innerText || 'export';
         downloadFile(csvContent, `${wordText}_anki.csv`);
     }
 
     function escapeCsv(text) {
         if (!text) return "";
-        // Replace " with "" to escape it in CSV
         return text.replace(/"/g, '""');
     }
 
