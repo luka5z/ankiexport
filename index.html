@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary & Anki Exporter</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --surface: #ffffff;
+            --bg: #f3f4f6;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 2rem 1rem;
+            margin: 0;
+        }
+
+        .container {
+            background: var(--surface);
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 { margin-top: 0; text-align: center; color: var(--primary); }
+
+        /* Search Section */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #93c5fd; cursor: not-allowed; }
+
+        .btn-secondary {
+            background-color: #10b981;
+            width: 100%;
+            margin-top: 1rem;
+            display: none; /* Hidden by default */
+        }
+        .btn-secondary:hover { background-color: #059669; }
+
+        /* Results Section */
+        #result-container { margin-top: 1rem; }
+        
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .word-title { font-size: 2rem; font-weight: bold; margin: 0; }
+        .phonetic { color: var(--text-light); font-family: monospace; font-size: 1.1rem; }
+
+        .meaning-group { margin-bottom: 1.5rem; }
+        .part-of-speech {
+            font-weight: bold;
+            font-style: italic;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        ul { margin: 0; padding-left: 1.2rem; }
+        li { margin-bottom: 0.5rem; line-height: 1.5; }
+        
+        .example {
+            color: var(--text-light);
+            font-size: 0.9em;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .error { color: #dc2626; text-align: center; margin-top: 1rem; }
+        .loader { text-align: center; color: var(--text-light); display: none; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Dictionary Lookup</h1>
+    
+    <div class="search-box">
+        <input type="text" id="word-input" placeholder="Type a word..." onkeydown="if(event.key==='Enter') searchWord()">
+        <button onclick="searchWord()" id="search-btn">Search</button>
+    </div>
+
+    <div id="loader" class="loader">Searching...</div>
+    <div id="result-container"></div>
+    
+    <!-- Anki Export Button -->
+    <button id="export-btn" class="btn-secondary" onclick="exportToAnki()">Download Anki CSV</button>
+</div>
+
+<script>
+    const apiUrl = "https://api.dictionaryapi.dev/api/v2/entries/en/";
+    let currentData = null; // Store result for export
+
+    async function searchWord() {
+        const input = document.getElementById('word-input');
+        const resultContainer = document.getElementById('result-container');
+        const loader = document.getElementById('loader');
+        const exportBtn = document.getElementById('export-btn');
+        const word = input.value.trim();
+
+        if (!word) return;
+
+        // Reset UI
+        resultContainer.innerHTML = '';
+        exportBtn.style.display = 'none';
+        loader.style.display = 'block';
+        currentData = null;
+
+        try {
+            const response = await fetch(`${apiUrl}${word}`);
+            
+            if (!response.ok) {
+                throw new Error("Word not found");
+            }
+
+            const data = await response.json();
+            currentData = data[0]; // Take the first result
+            renderResult(currentData);
+            exportBtn.style.display = 'block';
+
+        } catch (error) {
+            resultContainer.innerHTML = `<div class="error">Could not find definition for "${word}".</div>`;
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+    function renderResult(entry) {
+        const container = document.getElementById('result-container');
+        
+        // 1. Header (Word + Phonetic)
+        const phoneticText = entry.phonetic || (entry.phonetics.find(p => p.text)?.text) || '';
+        let html = `
+            <div class="word-header">
+                <div>
+                    <h2 class="word-title">${entry.word}</h2>
+                    <span class="phonetic">${phoneticText}</span>
+                </div>
+            </div>
+        `;
+
+        // 2. Meanings
+        entry.meanings.forEach(meaning => {
+            html += `
+                <div class="meaning-group">
+                    <span class="part-of-speech">${meaning.partOfSpeech}</span>
+                    <ul>
+                        ${meaning.definitions.map(def => `
+                            <li>
+                                ${def.definition}
+                                ${def.example ? `<span class="example">"${def.example}"</span>` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // --- ANKI EXPORT LOGIC ---
+
+    function exportToAnki() {
+        if (!currentData) return;
+
+        // Anki CSV Format: "Front","Back"
+        // Front: Word + Phonetic
+        // Back: HTML definitions
+        
+        const word = currentData.word;
+        const phonetic = currentData.phonetic || (currentData.phonetics.find(p => p.text)?.text) || '';
+        
+        // Prepare Front Side
+        const front = `${word} <small style="color:gray;">${phonetic}</small>`;
+
+        // Prepare Back Side (Compile HTML for the card back)
+        let backHtml = '';
+        currentData.meanings.forEach(meaning => {
+            backHtml += `<b>${meaning.partOfSpeech}</b><ul>`;
+            meaning.definitions.forEach(def => {
+                backHtml += `<li>${def.definition}`;
+                if (def.example) {
+                    backHtml += `<br><em>e.g. ${def.example}</em>`;
+                }
+                backHtml += `</li>`;
+            });
+            backHtml += `</ul><br>`;
+        });
+
+        // Create CSV content (Handling CSV escaping)
+        // We replace double quotes with double-double quotes for CSV standard
+        const csvContent = `"${escapeCsv(front)}","${escapeCsv(backHtml)}"`;
+        
+        downloadFile(csvContent, `${word}_anki.csv`);
+    }
+
+    function escapeCsv(text) {
+        if (!text) return "";
+        // Replace " with "" to escape it in CSV
+        return text.replace(/"/g, '""');
+    }
+
+    function downloadFile(content, fileName) {
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
