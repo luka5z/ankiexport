@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictionary & Anki Exporter</title>
+    <title>Editable Dictionary to Anki</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
+            --secondary: #10b981; /* Green for Save */
+            --warning: #f59e0b;   /* Orange for Edit */
             --surface: #ffffff;
             --bg: #f3f4f6;
             --text: #1f2937;
@@ -36,78 +39,73 @@
         h1 { margin-top: 0; text-align: center; color: var(--primary); }
 
         /* Search Section */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 2rem;
-        }
-
+        .search-box { display: flex; gap: 10px; margin-bottom: 1.5rem; }
         input {
-            flex: 1;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            flex: 1; padding: 12px; font-size: 16px;
+            border: 1px solid var(--border); border-radius: 6px;
         }
-
         button {
-            padding: 12px 20px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
+            padding: 12px 20px; color: white; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600;
             transition: background 0.2s;
         }
+        #search-btn { background-color: var(--primary); }
+        #search-btn:hover { background-color: #1d4ed8; }
 
-        button:hover { background-color: #1d4ed8; }
-        button:disabled { background-color: #93c5fd; cursor: not-allowed; }
-
-        .btn-secondary {
-            background-color: #10b981;
-            width: 100%;
-            margin-top: 1rem;
-            display: none; /* Hidden by default */
+        /* Actions Bar */
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+            display: none; /* Hidden until search */
         }
-        .btn-secondary:hover { background-color: #059669; }
+        
+        .btn-edit { background-color: var(--warning); flex: 1; }
+        .btn-edit:hover { background-color: #d97706; }
+        
+        .btn-save { background-color: var(--secondary); flex: 1; }
+        .btn-save:hover { background-color: #059669; }
+
+        .btn-export { background-color: var(--text); flex: 1; }
+        .btn-export:hover { background-color: #374151; }
 
         /* Results Section */
-        #result-container { margin-top: 1rem; }
-        
+        #result-container {
+            padding: 1rem;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        /* Styling for when content is being edited */
+        .editing-mode {
+            background-color: #fffbeb; /* Light yellow */
+            border: 2px dashed var(--warning) !important;
+            outline: none;
+        }
+
         .word-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid var(--border);
-            padding-bottom: 1rem;
+            padding-bottom: 0.5rem;
             margin-bottom: 1rem;
         }
-
         .word-title { font-size: 2rem; font-weight: bold; margin: 0; }
         .phonetic { color: var(--text-light); font-family: monospace; font-size: 1.1rem; }
 
         .meaning-group { margin-bottom: 1.5rem; }
         .part-of-speech {
-            font-weight: bold;
-            font-style: italic;
-            color: var(--text-light);
-            margin-bottom: 0.5rem;
-            display: block;
+            font-weight: bold; font-style: italic; color: var(--text-light);
+            margin-bottom: 0.5rem; display: block;
         }
-
         ul { margin: 0; padding-left: 1.2rem; }
         li { margin-bottom: 0.5rem; line-height: 1.5; }
-        
-        .example {
-            color: var(--text-light);
-            font-size: 0.9em;
-            display: block;
-            margin-top: 4px;
-        }
+        .example { color: var(--text-light); font-size: 0.9em; display: block; margin-top: 4px; }
 
         .error { color: #dc2626; text-align: center; margin-top: 1rem; }
-        .loader { text-align: center; color: var(--text-light); display: none; }
+        .loader { text-align: center; color: var(--text-light); display: none; margin-top: 1rem; }
 
     </style>
 </head>
@@ -121,43 +119,49 @@
         <button onclick="searchWord()" id="search-btn">Search</button>
     </div>
 
+    <!-- Edit/Export Actions -->
+    <div class="action-bar" id="action-bar">
+        <button id="edit-btn" class="btn-edit" onclick="toggleEditMode()">
+            <i class="fas fa-pen"></i> Edit Text
+        </button>
+        <button id="export-btn" class="btn-export" onclick="exportToAnki()">
+            <i class="fas fa-download"></i> Anki CSV
+        </button>
+    </div>
+
     <div id="loader" class="loader">Searching...</div>
-    <div id="result-container"></div>
     
-    <!-- Anki Export Button -->
-    <button id="export-btn" class="btn-secondary" onclick="exportToAnki()">Download Anki CSV</button>
+    <!-- This container becomes contenteditable -->
+    <div id="result-container"></div>
 </div>
 
 <script>
     const apiUrl = "https://api.dictionaryapi.dev/api/v2/entries/en/";
-    let currentData = null; // Store result for export
+    let isEditing = false;
 
     async function searchWord() {
         const input = document.getElementById('word-input');
         const resultContainer = document.getElementById('result-container');
         const loader = document.getElementById('loader');
-        const exportBtn = document.getElementById('export-btn');
+        const actionBar = document.getElementById('action-bar');
         const word = input.value.trim();
 
         if (!word) return;
 
         // Reset UI
         resultContainer.innerHTML = '';
-        exportBtn.style.display = 'none';
+        actionBar.style.display = 'none';
         loader.style.display = 'block';
-        currentData = null;
+        resetEditMode(); // Ensure we aren't in edit mode
 
         try {
             const response = await fetch(`${apiUrl}${word}`);
-            
-            if (!response.ok) {
-                throw new Error("Word not found");
-            }
-
+            if (!response.ok) throw new Error("Word not found");
             const data = await response.json();
-            currentData = data[0]; // Take the first result
-            renderResult(currentData);
-            exportBtn.style.display = 'block';
+            
+            // Render the first result found
+            renderResult(data[0]);
+            actionBar.style.display = 'flex';
 
         } catch (error) {
             resultContainer.innerHTML = `<div class="error">Could not find definition for "${word}".</div>`;
@@ -168,28 +172,29 @@
 
     function renderResult(entry) {
         const container = document.getElementById('result-container');
-        
-        // 1. Header (Word + Phonetic)
         const phoneticText = entry.phonetic || (entry.phonetics.find(p => p.text)?.text) || '';
+
+        // We wrap the front and back content in IDs so we can grab them easily for export later
+        // Note: inline styles are used because they transfer well to Anki
         let html = `
-            <div class="word-header">
-                <div>
-                    <h2 class="word-title">${entry.word}</h2>
-                    <span class="phonetic">${phoneticText}</span>
-                </div>
+            <div id="anki-front">
+                <span style="font-size: 24px; font-weight: bold;">${entry.word}</span> 
+                <span style="color: gray; font-family: monospace;">${phoneticText}</span>
+                <hr style="margin: 10px 0; border: 0; border-top: 2px solid #eee;">
             </div>
+            
+            <div id="anki-back">
         `;
 
-        // 2. Meanings
         entry.meanings.forEach(meaning => {
             html += `
                 <div class="meaning-group">
-                    <span class="part-of-speech">${meaning.partOfSpeech}</span>
+                    <span style="font-weight: bold; font-style: italic; color: #666;">${meaning.partOfSpeech}</span>
                     <ul>
                         ${meaning.definitions.map(def => `
                             <li>
                                 ${def.definition}
-                                ${def.example ? `<span class="example">"${def.example}"</span>` : ''}
+                                ${def.example ? `<br><span style="color: #666; font-size: 0.9em;">"${def.example}"</span>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -197,43 +202,77 @@
             `;
         });
 
+        html += `</div>`; // Close back container
         container.innerHTML = html;
+    }
+
+    // --- EDITING LOGIC ---
+
+    function toggleEditMode() {
+        const container = document.getElementById('result-container');
+        const btn = document.getElementById('edit-btn');
+        
+        isEditing = !isEditing;
+
+        if (isEditing) {
+            // Switch to Edit Mode
+            container.contentEditable = "true";
+            container.classList.add('editing-mode');
+            container.focus();
+            
+            // Change Button Visuals
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Text';
+            btn.className = 'btn-save';
+        } else {
+            // Save Mode (Switch back to View)
+            container.contentEditable = "false";
+            container.classList.remove('editing-mode');
+            
+            // Change Button Visuals
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Text';
+            btn.className = 'btn-edit';
+        }
+    }
+
+    function resetEditMode() {
+        isEditing = false;
+        const container = document.getElementById('result-container');
+        const btn = document.getElementById('edit-btn');
+        if(container) {
+            container.contentEditable = "false";
+            container.classList.remove('editing-mode');
+        }
+        if(btn) {
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Text';
+            btn.className = 'btn-edit';
+        }
     }
 
     // --- ANKI EXPORT LOGIC ---
 
     function exportToAnki() {
-        if (!currentData) return;
-
-        // Anki CSV Format: "Front","Back"
-        // Front: Word + Phonetic
-        // Back: HTML definitions
+        // IMPORTANT: We now grab the content directly from the DOM (HTML)
+        // instead of the JSON API data. This preserves user edits.
         
-        const word = currentData.word;
-        const phonetic = currentData.phonetic || (currentData.phonetics.find(p => p.text)?.text) || '';
-        
-        // Prepare Front Side
-        const front = `${word} <small style="color:gray;">${phonetic}</small>`;
+        const frontDiv = document.getElementById('anki-front');
+        const backDiv = document.getElementById('anki-back');
 
-        // Prepare Back Side (Compile HTML for the card back)
-        let backHtml = '';
-        currentData.meanings.forEach(meaning => {
-            backHtml += `<b>${meaning.partOfSpeech}</b><ul>`;
-            meaning.definitions.forEach(def => {
-                backHtml += `<li>${def.definition}`;
-                if (def.example) {
-                    backHtml += `<br><em>e.g. ${def.example}</em>`;
-                }
-                backHtml += `</li>`;
-            });
-            backHtml += `</ul><br>`;
-        });
+        if (!frontDiv || !backDiv) {
+            alert("No content to export!");
+            return;
+        }
+
+        // Get the HTML content as modified by the user
+        // We clean up newlines to make the CSV cleaner
+        const frontHtml = frontDiv.innerHTML.replace(/\n/g, '').trim();
+        const backHtml = backDiv.innerHTML.replace(/\n/g, '').trim();
 
         // Create CSV content (Handling CSV escaping)
-        // We replace double quotes with double-double quotes for CSV standard
-        const csvContent = `"${escapeCsv(front)}","${escapeCsv(backHtml)}"`;
+        const csvContent = `"${escapeCsv(frontHtml)}","${escapeCsv(backHtml)}"`;
         
-        downloadFile(csvContent, `${word}_anki.csv`);
+        // Use the word text for filename, fallback to 'export'
+        const wordText = frontDiv.querySelector('span')?.innerText || 'export';
+        downloadFile(csvContent, `${wordText}_anki.csv`);
     }
 
     function escapeCsv(text) {
