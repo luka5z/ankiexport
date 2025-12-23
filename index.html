@@ -1,22 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dictionary to Anki</title>
+    <title>Solarized Dictionary</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* --- SOLARIZED PALETTE & THEME VARIABLES --- */
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary: #10b981;
-            --warning: #f59e0b;
-            --surface: #ffffff;
-            --bg: #f3f4f6;
-            --text: #1f2937;
-            --text-light: #6b7280;
-            --border: #e5e7eb;
-            --radius: 12px;
+            /* Solarized Colors */
+            --sol-base03: #002b36;
+            --sol-base02: #073642;
+            --sol-base01: #586e75;
+            --sol-base00: #657b83;
+            --sol-base0:  #839496;
+            --sol-base1:  #93a1a1;
+            --sol-base2:  #eee8d5;
+            --sol-base3:  #fdf6e3;
+            --sol-yellow: #b58900;
+            --sol-orange: #cb4b16;
+            --sol-red:    #dc322f;
+            --sol-magenta:#d33682;
+            --sol-violet: #6c71c4;
+            --sol-blue:   #268bd2;
+            --sol-cyan:   #2aa198;
+            --sol-green:  #859900;
+
+            /* Default (Light) Theme Mappings */
+            --bg: var(--sol-base3);
+            --surface: var(--sol-base2);
+            --text-main: var(--sol-base00);
+            --text-muted: var(--sol-base01); 
+            --primary: var(--sol-blue);
+            --secondary: var(--sol-green);
+            --warning: var(--sol-yellow);
+            --border: var(--sol-base1);
+            --shadow: rgba(0, 0, 0, 0.05);
+            --input-bg: #ffffff;
+            
+            --radius: 8px;
+        }
+
+        /* Dark Theme Overrides */
+        [data-theme="dark"] {
+            --bg: var(--sol-base03);
+            --surface: var(--sol-base02);
+            --text-main: var(--sol-base0);
+            --text-muted: var(--sol-base1); /* Slightly lighter for readability on dark */
+            --primary: var(--sol-blue);
+            --border: var(--sol-base01);
+            --shadow: rgba(0, 0, 0, 0.3);
+            --input-bg: var(--sol-base03);
         }
 
         * { box-sizing: border-box; }
@@ -24,12 +58,13 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
-            color: var(--text);
+            color: var(--text-main);
             display: flex;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 1rem; 
+            padding: 1rem;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -38,86 +73,139 @@
             max-width: 600px;
             padding: 1.5rem;
             border-radius: var(--radius);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px var(--shadow);
             display: flex;
             flex-direction: column;
-            height: fit-content;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        h1 { margin-top: 0; text-align: center; color: var(--primary); font-size: 1.75rem; }
+        /* Header & Toggle */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 { 
+            margin: 0; 
+            color: var(--primary); 
+            font-size: 1.75rem; 
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: color 0.2s, background 0.2s;
+        }
+        .theme-toggle:hover {
+            color: var(--primary);
+            background-color: rgba(0,0,0,0.05);
+        }
 
         /* Search Section */
         .search-box { display: flex; gap: 10px; margin-bottom: 1rem; }
 
         input {
             flex: 1; padding: 14px; font-size: 16px; 
-            border: 1px solid var(--border); border-radius: 8px;
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background-color: var(--input-bg);
+            color: var(--text-main);
             -webkit-appearance: none;
+            transition: border-color 0.2s;
         }
 
-        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        input:focus { outline: none; border-color: var(--primary); }
 
-        button {
+        button.action-btn {
             padding: 12px 20px; color: white; border: none;
-            border-radius: 8px; cursor: pointer; font-weight: 600;
-            font-size: 1rem; transition: transform 0.1s, background 0.2s;
+            border-radius: var(--radius); cursor: pointer; font-weight: 600;
+            font-size: 1rem; transition: opacity 0.2s;
             touch-action: manipulation;
         }
+        button.action-btn:hover { opacity: 0.9; }
+        button.action-btn:active { transform: scale(0.98); }
 
-        button:active { transform: scale(0.96); }
-
-        #search-btn { background-color: var(--primary); min-width: 80px;}
-        #search-btn:hover { background-color: var(--primary-dark); }
+        #search-btn { background-color: var(--primary); min-width: 60px;}
 
         /* Actions Bar */
         .action-bar { display: none; gap: 10px; margin-bottom: 1.5rem; }
-        .btn-edit { background-color: var(--warning); flex: 1; }
-        .btn-save { background-color: var(--secondary); flex: 1; }
-        .btn-export { background-color: var(--text); flex: 1; }
+        .btn-edit { background-color: var(--warning); flex: 1; color: #fff; }
+        .btn-save { background-color: var(--secondary); flex: 1; color: #fff; }
+        .btn-export { background-color: var(--text-muted); flex: 1; color: #fff; }
 
         /* Results Section */
         #result-container {
             padding: 0.5rem;
             border: 2px solid transparent;
-            border-radius: 8px;
+            border-radius: var(--radius);
             transition: all 0.2s;
             overflow-wrap: break-word; 
         }
 
         .editing-mode {
-            background-color: #fffbeb;
+            background-color: rgba(181, 137, 0, 0.1); /* Solarized Yellow tint */
             border-color: var(--warning) !important;
             outline: none;
             padding: 1rem;
         }
 
-        .loader { text-align: center; color: var(--text-light); display: none; margin-top: 2rem;}
+        .loader { text-align: center; color: var(--text-muted); display: none; margin-top: 2rem;}
+        .error { text-align: center; color: var(--sol-red); margin-top: 20px; }
+
+        /* Definitions Styling */
+        .word-title { font-size: 1.8rem; font-weight: bold; margin: 0; }
+        .phonetic { color: var(--text-muted); font-family: monospace; font-size:1.1rem; }
+        
+        .part-of-speech {
+            font-weight: bold; font-style: italic; 
+            color: var(--surface); 
+            background: var(--text-muted);
+            padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;
+        }
+
+        ul { margin: 0; padding-left: 1.2rem; margin-top: 10px; }
+        li { margin-bottom: 10px; line-height: 1.6; color: var(--text-main); }
+        .example { 
+            color: var(--text-muted); font-size: 0.9em; font-style: italic; 
+            display: block; margin-top: 4px;
+        }
 
         /* Mobile Styles */
         @media (max-width: 480px) {
-            body { padding: 0; background-color: var(--surface); }
-            .container { box-shadow: none; border-radius: 0; padding: 1rem; max-width: 100%; }
+            body { padding: 0; }
+            .container { box-shadow: none; border-radius: 0; padding: 1rem; max-width: 100%; min-height: 100vh;}
             .action-bar { flex-direction: column; gap: 12px; }
-            button { width: 100%; padding: 14px; }
+            button.action-btn { width: 100%; padding: 14px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1><i class="fas fa-book-open"></i> Dictionary</h1>
+    <div class="header-row">
+        <h1><i class="fas fa-book-open"></i> Dictionary</h1>
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
     
     <div class="search-box">
         <input type="text" id="word-input" placeholder="Enter a word..." autocomplete="off" onkeydown="if(event.key==='Enter') searchWord()">
-        <button onclick="searchWord()" id="search-btn"><i class="fas fa-search"></i></button>
+        <button onclick="searchWord()" id="search-btn" class="action-btn"><i class="fas fa-search"></i></button>
     </div>
 
     <div class="action-bar" id="action-bar">
-        <button id="edit-btn" class="btn-edit" onclick="toggleEditMode()">
+        <button id="edit-btn" class="action-btn btn-edit" onclick="toggleEditMode()">
             <i class="fas fa-pen"></i> Edit Content
         </button>
-        <button id="export-btn" class="btn-export" onclick="exportToAnki()">
-            <i class="fas fa-download"></i> Download Anki CSV
+        <button id="export-btn" class="action-btn btn-export" onclick="exportToAnki()">
+            <i class="fas fa-download"></i> Anki CSV
         </button>
     </div>
 
@@ -129,6 +217,38 @@
     const apiUrl = "https://api.dictionaryapi.dev/api/v2/entries/en/";
     let isEditing = false;
 
+    // --- THEME MANAGEMENT ---
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const themeBtn = document.getElementById('theme-btn');
+
+        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeBtn.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        const themeBtn = document.getElementById('theme-btn');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        themeBtn.innerHTML = newTheme === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+    }
+
+    // Initialize theme immediately
+    initTheme();
+
+
+    // --- SEARCH LOGIC ---
     async function searchWord() {
         const input = document.getElementById('word-input');
         const resultContainer = document.getElementById('result-container');
@@ -138,7 +258,7 @@
 
         if (!word) return;
 
-        input.blur(); // Dismiss keyboard on mobile
+        input.blur(); 
         resultContainer.innerHTML = '';
         actionBar.style.display = 'none';
         loader.style.display = 'block';
@@ -151,7 +271,7 @@
             renderResult(data[0]);
             actionBar.style.display = 'flex';
         } catch (error) {
-            resultContainer.innerHTML = `<div style="text-align:center; color:#dc2626; margin-top:20px;">
+            resultContainer.innerHTML = `<div class="error">
                 <i class="fas fa-exclamation-circle fa-2x"></i><br><br>
                 Could not find definition for <b>"${word}"</b>.
             </div>`;
@@ -164,13 +284,15 @@
         const container = document.getElementById('result-container');
         const phoneticText = entry.phonetic || (entry.phonetics.find(p => p.text)?.text) || '';
 
+        // Note: For inline styles in generated HTML, we use standard hex codes or safe grays
+        // so that the Anki card looks good regardless of the user's local theme.
         let html = `
             <div id="anki-front">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size: 1.8rem; font-weight: bold;">${entry.word}</span> 
-                    <span style="color: gray; font-family: monospace; font-size:1.1rem;">${phoneticText}</span>
+                    <span class="word-title">${entry.word}</span> 
+                    <span class="phonetic">${phoneticText}</span>
                 </div>
-                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
+                <hr style="margin: 15px 0; border: 0; border-top: 1px solid #93a1a1;">
             </div>
             
             <div id="anki-back">
@@ -179,12 +301,12 @@
         entry.meanings.forEach(meaning => {
             html += `
                 <div class="meaning-group" style="margin-bottom: 1.5rem;">
-                    <span style="font-weight: bold; font-style: italic; color: #444; background:#eee; padding:2px 6px; border-radius:4px;">${meaning.partOfSpeech}</span>
-                    <ul style="margin-top:10px; padding-left: 1.2rem;">
+                    <span class="part-of-speech">${meaning.partOfSpeech}</span>
+                    <ul>
                         ${meaning.definitions.map(def => `
-                            <li style="margin-bottom:8px; line-height: 1.6;">
+                            <li>
                                 ${def.definition}
-                                ${def.example ? `<br><span style="color: #666; font-size: 0.9em; font-style:italic;">"${def.example}"</span>` : ''}
+                                ${def.example ? `<br><span class="example">"${def.example}"</span>` : ''}
                             </li>
                         `).join('')}
                     </ul>
@@ -207,12 +329,12 @@
             container.classList.add('editing-mode');
             container.focus();
             btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-            btn.className = 'btn-save';
+            btn.className = 'btn-save action-btn';
         } else {
             container.contentEditable = "false";
             container.classList.remove('editing-mode');
             btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
-            btn.className = 'btn-edit';
+            btn.className = 'btn-edit action-btn';
         }
     }
 
@@ -226,7 +348,7 @@
         }
         if(btn) {
             btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
-            btn.className = 'btn-edit';
+            btn.className = 'btn-edit action-btn';
         }
     }
 
@@ -240,10 +362,13 @@
             return;
         }
 
+        // We clone the nodes to remove class names that are specific to the web app
+        // so Anki uses its own default styling or the inline styles we provided.
         const frontHtml = frontDiv.innerHTML.replace(/\n/g, '').trim();
         const backHtml = backDiv.innerHTML.replace(/\n/g, '').trim();
+
         const csvContent = `"${escapeCsv(frontHtml)}","${escapeCsv(backHtml)}"`;
-        const wordText = frontDiv.querySelector('span')?.innerText || 'export';
+        const wordText = frontDiv.querySelector('.word-title')?.innerText || 'export';
         downloadFile(csvContent, `${wordText}_anki.csv`);
     }
 
@@ -264,13 +389,10 @@
         document.body.removeChild(link);
     }
 
-    // --- NEW: URL PARAMETER AUTO-SEARCH ---
+    // --- AUTO-SEARCH ---
     window.addEventListener('DOMContentLoaded', () => {
-        // Parse the URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const wordParam = urlParams.get('w');
-
-        // If 'w' exists, fill input and trigger search
         if (wordParam) {
             const input = document.getElementById('word-input');
             input.value = wordParam;
