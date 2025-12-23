@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport setting is crucial for mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dictionary to Anki</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -30,7 +29,6 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            /* Remove padding on mobile to use full screen */
             padding: 1rem; 
         }
 
@@ -46,42 +44,23 @@
             height: fit-content;
         }
 
-        h1 { 
-            margin-top: 0; 
-            text-align: center; 
-            color: var(--primary);
-            font-size: 1.75rem;
-        }
+        h1 { margin-top: 0; text-align: center; color: var(--primary); font-size: 1.75rem; }
 
-        /* --- Search Section --- */
-        .search-box { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 1rem; 
-        }
+        /* Search Section */
+        .search-box { display: flex; gap: 10px; margin-bottom: 1rem; }
 
         input {
-            flex: 1; 
-            padding: 14px; 
-            /* 16px prevents iOS zoom on focus */
-            font-size: 16px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px;
-            -webkit-appearance: none; /* Removes iOS shadow */
+            flex: 1; padding: 14px; font-size: 16px; 
+            border: 1px solid var(--border); border-radius: 8px;
+            -webkit-appearance: none;
         }
 
         input:focus { outline: 2px solid var(--primary); border-color: transparent; }
 
         button {
-            padding: 12px 20px; 
-            color: white; 
-            border: none;
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: 600;
-            font-size: 1rem;
-            transition: transform 0.1s, background 0.2s;
-            /* Touch-action helps with tap responsiveness */
+            padding: 12px 20px; color: white; border: none;
+            border-radius: 8px; cursor: pointer; font-weight: 600;
+            font-size: 1rem; transition: transform 0.1s, background 0.2s;
             touch-action: manipulation;
         }
 
@@ -90,110 +69,36 @@
         #search-btn { background-color: var(--primary); min-width: 80px;}
         #search-btn:hover { background-color: var(--primary-dark); }
 
-        /* --- Actions Bar --- */
-        .action-bar {
-            display: none; /* Hidden until search */
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-        
+        /* Actions Bar */
+        .action-bar { display: none; gap: 10px; margin-bottom: 1.5rem; }
         .btn-edit { background-color: var(--warning); flex: 1; }
         .btn-save { background-color: var(--secondary); flex: 1; }
         .btn-export { background-color: var(--text); flex: 1; }
 
-        /* --- Results Section --- */
+        /* Results Section */
         #result-container {
             padding: 0.5rem;
             border: 2px solid transparent;
             border-radius: 8px;
             transition: all 0.2s;
-            overflow-wrap: break-word; /* Prevents long words breaking layout */
+            overflow-wrap: break-word; 
         }
 
         .editing-mode {
             background-color: #fffbeb;
             border-color: var(--warning) !important;
             outline: none;
-            padding: 1rem; /* Add padding when editing for visual clarity */
-        }
-
-        .word-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start; /* Align top in case of wrapping */
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap; /* Allow wrapping on tiny screens */
-            gap: 10px;
-        }
-        
-        .word-title { 
-            font-size: 2rem; 
-            font-weight: bold; 
-            margin: 0; 
-            line-height: 1.1;
-        }
-        
-        .phonetic { 
-            color: var(--text-light); 
-            font-family: monospace; 
-            font-size: 1.1rem;
-            align-self: center;
-        }
-
-        .meaning-group { margin-bottom: 1.5rem; }
-        .part-of-speech {
-            font-weight: bold; 
-            font-style: italic; 
-            color: var(--text-light);
-            margin-bottom: 0.5rem; 
-            display: block;
-            background: #f0fdf4;
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        ul { margin: 0; padding-left: 1.2rem; }
-        li { margin-bottom: 0.8rem; line-height: 1.6; } /* Better line height for reading */
-        
-        .example { 
-            color: var(--text-light); 
-            font-size: 0.9em; 
-            display: block; 
-            margin-top: 4px; 
-            border-left: 3px solid var(--border);
-            padding-left: 8px;
+            padding: 1rem;
         }
 
         .loader { text-align: center; color: var(--text-light); display: none; margin-top: 2rem;}
 
-        /* --- Mobile Specific Styles --- */
+        /* Mobile Styles */
         @media (max-width: 480px) {
             body { padding: 0; background-color: var(--surface); }
-            
-            .container {
-                box-shadow: none;
-                border-radius: 0;
-                padding: 1rem;
-                max-width: 100%;
-            }
-
-            h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-
-            .action-bar {
-                flex-direction: column; /* Stack buttons vertically */
-                gap: 12px;
-            }
-
-            button {
-                width: 100%; /* Full width buttons */
-                padding: 14px;
-            }
-
-            .word-title { font-size: 1.75rem; }
+            .container { box-shadow: none; border-radius: 0; padding: 1rem; max-width: 100%; }
+            .action-bar { flex-direction: column; gap: 12px; }
+            button { width: 100%; padding: 14px; }
         }
     </style>
 </head>
@@ -207,7 +112,6 @@
         <button onclick="searchWord()" id="search-btn"><i class="fas fa-search"></i></button>
     </div>
 
-    <!-- Edit/Export Actions -->
     <div class="action-bar" id="action-bar">
         <button id="edit-btn" class="btn-edit" onclick="toggleEditMode()">
             <i class="fas fa-pen"></i> Edit Content
@@ -218,8 +122,6 @@
     </div>
 
     <div id="loader" class="loader"><i class="fas fa-spinner fa-spin"></i> Finding definition...</div>
-    
-    <!-- This container becomes contenteditable -->
     <div id="result-container"></div>
 </div>
 
@@ -236,10 +138,7 @@
 
         if (!word) return;
 
-        // Dismiss keyboard on mobile
-        input.blur();
-
-        // Reset UI
+        input.blur(); // Dismiss keyboard on mobile
         resultContainer.innerHTML = '';
         actionBar.style.display = 'none';
         loader.style.display = 'block';
@@ -249,10 +148,8 @@
             const response = await fetch(`${apiUrl}${word}`);
             if (!response.ok) throw new Error("Word not found");
             const data = await response.json();
-            
             renderResult(data[0]);
             actionBar.style.display = 'flex';
-
         } catch (error) {
             resultContainer.innerHTML = `<div style="text-align:center; color:#dc2626; margin-top:20px;">
                 <i class="fas fa-exclamation-circle fa-2x"></i><br><br>
@@ -281,11 +178,11 @@
 
         entry.meanings.forEach(meaning => {
             html += `
-                <div class="meaning-group">
+                <div class="meaning-group" style="margin-bottom: 1.5rem;">
                     <span style="font-weight: bold; font-style: italic; color: #444; background:#eee; padding:2px 6px; border-radius:4px;">${meaning.partOfSpeech}</span>
-                    <ul style="margin-top:10px;">
+                    <ul style="margin-top:10px; padding-left: 1.2rem;">
                         ${meaning.definitions.map(def => `
-                            <li style="margin-bottom:8px;">
+                            <li style="margin-bottom:8px; line-height: 1.6;">
                                 ${def.definition}
                                 ${def.example ? `<br><span style="color: #666; font-size: 0.9em; font-style:italic;">"${def.example}"</span>` : ''}
                             </li>
@@ -300,24 +197,20 @@
     }
 
     // --- EDITING LOGIC ---
-
     function toggleEditMode() {
         const container = document.getElementById('result-container');
         const btn = document.getElementById('edit-btn');
-        
         isEditing = !isEditing;
 
         if (isEditing) {
             container.contentEditable = "true";
             container.classList.add('editing-mode');
             container.focus();
-            
             btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
             btn.className = 'btn-save';
         } else {
             container.contentEditable = "false";
             container.classList.remove('editing-mode');
-            
             btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
             btn.className = 'btn-edit';
         }
@@ -338,7 +231,6 @@
     }
 
     // --- ANKI EXPORT LOGIC ---
-
     function exportToAnki() {
         const frontDiv = document.getElementById('anki-front');
         const backDiv = document.getElementById('anki-back');
@@ -350,9 +242,7 @@
 
         const frontHtml = frontDiv.innerHTML.replace(/\n/g, '').trim();
         const backHtml = backDiv.innerHTML.replace(/\n/g, '').trim();
-
         const csvContent = `"${escapeCsv(frontHtml)}","${escapeCsv(backHtml)}"`;
-        
         const wordText = frontDiv.querySelector('span')?.innerText || 'export';
         downloadFile(csvContent, `${wordText}_anki.csv`);
     }
@@ -373,6 +263,21 @@
         link.click();
         document.body.removeChild(link);
     }
+
+    // --- NEW: URL PARAMETER AUTO-SEARCH ---
+    window.addEventListener('DOMContentLoaded', () => {
+        // Parse the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const wordParam = urlParams.get('w');
+
+        // If 'w' exists, fill input and trigger search
+        if (wordParam) {
+            const input = document.getElementById('word-input');
+            input.value = wordParam;
+            searchWord();
+        }
+    });
+
 </script>
 
 </body>
