@@ -46,7 +46,7 @@
             --bg: var(--sol-base03);
             --surface: var(--sol-base02);
             --text-main: var(--sol-base0);
-            --text-muted: var(--sol-base1); /* Slightly lighter for readability on dark */
+            --text-muted: var(--sol-base1);
             --primary: var(--sol-blue);
             --border: var(--sol-base01);
             --shadow: rgba(0, 0, 0, 0.3);
@@ -87,26 +87,14 @@
             margin-bottom: 1.5rem;
         }
 
-        h1 { 
-            margin: 0; 
-            color: var(--primary); 
-            font-size: 1.75rem; 
-        }
+        h1 { margin: 0; color: var(--primary); font-size: 1.75rem; }
 
         .theme-toggle {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: color 0.2s, background 0.2s;
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.2rem; cursor: pointer; padding: 8px;
+            border-radius: 50%; transition: color 0.2s, background 0.2s;
         }
-        .theme-toggle:hover {
-            color: var(--primary);
-            background-color: rgba(0,0,0,0.05);
-        }
+        .theme-toggle:hover { color: var(--primary); background-color: rgba(0,0,0,0.05); }
 
         /* Search Section */
         .search-box { display: flex; gap: 10px; margin-bottom: 1rem; }
@@ -114,12 +102,9 @@
         input {
             flex: 1; padding: 14px; font-size: 16px; 
             border: 1px solid var(--border); border-radius: var(--radius);
-            background-color: var(--input-bg);
-            color: var(--text-main);
-            -webkit-appearance: none;
-            transition: border-color 0.2s;
+            background-color: var(--input-bg); color: var(--text-main);
+            -webkit-appearance: none; transition: border-color 0.2s;
         }
-
         input:focus { outline: none; border-color: var(--primary); }
 
         button.action-btn {
@@ -134,10 +119,24 @@
         #search-btn { background-color: var(--primary); min-width: 60px;}
 
         /* Actions Bar */
-        .action-bar { display: none; gap: 10px; margin-bottom: 1.5rem; }
+        .action-bar { display: none; gap: 10px; margin-bottom: 1.5rem; align-items: stretch; }
+        
         .btn-edit { background-color: var(--warning); flex: 1; color: #fff; }
         .btn-save { background-color: var(--secondary); flex: 1; color: #fff; }
-        .btn-export { background-color: var(--text-muted); flex: 1; color: #fff; }
+        .btn-export { background-color: var(--text-muted); flex: 2; color: #fff; }
+
+        /* Separator Select Styling */
+        .separator-select {
+            padding: 0 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+            min-width: 80px;
+        }
 
         /* Results Section */
         #result-container {
@@ -149,7 +148,7 @@
         }
 
         .editing-mode {
-            background-color: rgba(181, 137, 0, 0.1); /* Solarized Yellow tint */
+            background-color: rgba(181, 137, 0, 0.1); 
             border-color: var(--warning) !important;
             outline: none;
             padding: 1rem;
@@ -161,27 +160,21 @@
         /* Definitions Styling */
         .word-title { font-size: 1.8rem; font-weight: bold; margin: 0; }
         .phonetic { color: var(--text-muted); font-family: monospace; font-size:1.1rem; }
-        
         .part-of-speech {
-            font-weight: bold; font-style: italic; 
-            color: var(--surface); 
-            background: var(--text-muted);
-            padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;
+            font-weight: bold; font-style: italic; color: var(--surface); 
+            background: var(--text-muted); padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;
         }
 
         ul { margin: 0; padding-left: 1.2rem; margin-top: 10px; }
         li { margin-bottom: 10px; line-height: 1.6; color: var(--text-main); }
-        .example { 
-            color: var(--text-muted); font-size: 0.9em; font-style: italic; 
-            display: block; margin-top: 4px;
-        }
+        .example { color: var(--text-muted); font-size: 0.9em; font-style: italic; display: block; margin-top: 4px;}
 
         /* Mobile Styles */
         @media (max-width: 480px) {
             body { padding: 0; }
             .container { box-shadow: none; border-radius: 0; padding: 1rem; max-width: 100%; min-height: 100vh;}
             .action-bar { flex-direction: column; gap: 12px; }
-            button.action-btn { width: 100%; padding: 14px; }
+            button.action-btn, .separator-select { width: 100%; padding: 14px; }
         }
     </style>
 </head>
@@ -202,10 +195,19 @@
 
     <div class="action-bar" id="action-bar">
         <button id="edit-btn" class="action-btn btn-edit" onclick="toggleEditMode()">
-            <i class="fas fa-pen"></i> Edit Content
+            <i class="fas fa-pen"></i> Edit
         </button>
+        
+        <!-- Separator Selection -->
+        <select id="separator-select" class="separator-select" aria-label="CSV Separator">
+            <option value=";" selected>Sep: ;</option>
+            <option value=",">Sep: ,</option>
+            <option value="	">Sep: Tab</option>
+            <option value="|">Sep: |</option>
+        </select>
+
         <button id="export-btn" class="action-btn btn-export" onclick="exportToAnki()">
-            <i class="fas fa-download"></i> Anki CSV
+            <i class="fas fa-download"></i> CSV
         </button>
     </div>
 
@@ -240,13 +242,10 @@
 
         html.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
-        
         themeBtn.innerHTML = newTheme === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
     }
 
-    // Initialize theme immediately
     initTheme();
-
 
     // --- SEARCH LOGIC ---
     async function searchWord() {
@@ -284,8 +283,7 @@
         const container = document.getElementById('result-container');
         const phoneticText = entry.phonetic || (entry.phonetics.find(p => p.text)?.text) || '';
 
-        // Note: For inline styles in generated HTML, we use standard hex codes or safe grays
-        // so that the Anki card looks good regardless of the user's local theme.
+        // Note: Inline styles used to ensure Anki compatibility regardless of themes
         let html = `
             <div id="anki-front">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -328,12 +326,12 @@
             container.contentEditable = "true";
             container.classList.add('editing-mode');
             container.focus();
-            btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            btn.innerHTML = '<i class="fas fa-save"></i> Save';
             btn.className = 'btn-save action-btn';
         } else {
             container.contentEditable = "false";
             container.classList.remove('editing-mode');
-            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit';
             btn.className = 'btn-edit action-btn';
         }
     }
@@ -347,7 +345,7 @@
             container.classList.remove('editing-mode');
         }
         if(btn) {
-            btn.innerHTML = '<i class="fas fa-pen"></i> Edit Content';
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit';
             btn.className = 'btn-edit action-btn';
         }
     }
@@ -356,24 +354,28 @@
     function exportToAnki() {
         const frontDiv = document.getElementById('anki-front');
         const backDiv = document.getElementById('anki-back');
+        const sepSelect = document.getElementById('separator-select');
 
         if (!frontDiv || !backDiv) {
             alert("No content to export!");
             return;
         }
 
-        // We clone the nodes to remove class names that are specific to the web app
-        // so Anki uses its own default styling or the inline styles we provided.
+        const separator = sepSelect.value;
         const frontHtml = frontDiv.innerHTML.replace(/\n/g, '').trim();
         const backHtml = backDiv.innerHTML.replace(/\n/g, '').trim();
 
-        const csvContent = `"${escapeCsv(frontHtml)}","${escapeCsv(backHtml)}"`;
+        // Join fields with the selected separator
+        // Both fields are escaped with quotes regardless of the separator choice
+        const csvContent = `"${escapeCsv(frontHtml)}"${separator}"${escapeCsv(backHtml)}"`;
+        
         const wordText = frontDiv.querySelector('.word-title')?.innerText || 'export';
         downloadFile(csvContent, `${wordText}_anki.csv`);
     }
 
     function escapeCsv(text) {
         if (!text) return "";
+        // Replace " with "" to escape it in CSV
         return text.replace(/"/g, '""');
     }
 
